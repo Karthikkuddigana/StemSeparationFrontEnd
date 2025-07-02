@@ -15,6 +15,7 @@ export default function Navbar() {
                         <Link href='/howitworks'><div className='px-5 hover:bg-slate-400 rounded py-2 flex justify-center items-center'>How it works</div></Link>
                         <Link href='/about'><div className='px-5 hover:bg-slate-400 rounded py-2 flex justify-center items-center'>About</div> </Link>  
                         <Link href="/login"><div className='px-5 hover:bg-slate-400 rounded py-2 flex justify-center items-center'>Login</div></Link>
+                        <Link href="/StemsDisplay"><div className='px-5 hover:bg-slate-400 rounded py-2 flex justify-center items-center'>Stems Separated</div></Link>
                     </div>
                 </div>
         </nav>
