@@ -1,6 +1,8 @@
+"use client"
 import React from 'react'
 
 export default function Footer() {
+   
   return (
     <div id='footer' className='bg-black text-white p-10 flex justify-around mt-10'>
             <div className='flex-col'>

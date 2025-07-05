@@ -2,12 +2,14 @@
 import React from 'react'
 import Upload from '@/components/Upload'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function Landing() {
     const [file, setFile] = useState("")
     const [resetTrigger, setResetTrigger] =useState(0)
     const [stemCount, setstemCount] = useState("")
     const [error, seterror] = useState("");
+    const router = useRouter(); 
     const validateFile = (file) => { 
 
      }
@@ -25,7 +27,7 @@ export default function Landing() {
     const handleFiveStems=()=>{
         setstemCount(5); 
     }
-    const submitForm=()=>{
+    const submitForm=async ()=>{
         console.log(stemCount,file.name)
         if(!file && !stemCount){
             alert("Pls upload a file and stem count to continue")
@@ -36,6 +38,25 @@ export default function Landing() {
             }   
             if(!file){
                 alert("Pls upload a file to continue")
+            }
+            else{
+                const formData = new FormData(); 
+                formData.append("mediaFile",file); 
+                formData.append("noOfStems",stemCount); 
+                const response = await fetch("http://localhost:5205/UploadAudio",{
+                    method: "POST", 
+                    headers:{
+                        // "Content-Type":"multipart/form-data",
+                        "Authorization":"Bearer "+localStorage.getItem("token")
+                    },
+                    body: formData
+                })
+                if(response.ok){
+                    const jsonResp=await response.json(); 
+                    console.log(jsonResp); 
+                    router.push("/StemsDisplay"); 
+                }
+                
             }
         }
         
