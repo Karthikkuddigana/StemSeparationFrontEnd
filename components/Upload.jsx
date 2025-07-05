@@ -15,6 +15,7 @@ export default function Upload({setFile,resetTrigger}) {
         const file = event.target.files[0]; 
         console.log(file.name,file.size,file.type)
         setFile(file); 
+        const formData = new FormData(); 
     }
   return (
     <div className='border-2 border-dashed border-gray-400 rounded p-5'>
