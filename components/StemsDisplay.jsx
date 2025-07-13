@@ -67,19 +67,43 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
         link.click();
     };
 
-    useEffect(() => {
-        const fetchStems = async () => {
-            try {
-                const res = await fetch('/api/stems');
-                const data = await res.json();
-                setStems(data);
-            } catch (error) {
-                console.error('Failed to fetch stems:', error);
-            }
-        };
+useEffect(() => {
+    const fetchStems = async () => {
+        try {
+            const token = localStorage.getItem('token'); 
 
-        fetchStems();
-    }, []);
+            const res = await fetch('https://localhost:7000/GetUserFiles', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!res.ok) {
+                throw new Error(`HTTP error! Status: ${res.status}`);
+            }
+
+            const data = await res.json();
+
+            const stemObject = data[0]; 
+            const urls = [
+                stemObject.stem1Url,
+                stemObject.stem2Url,
+                stemObject.stem3Url,
+                stemObject.stem4Url,
+                stemObject.stem5Url,
+            ].filter(url => !!url); 
+
+            setStems(urls); 
+        } catch (error) {
+            console.error('Failed to fetch stems:', error);
+        }
+    };
+
+    fetchStems();
+}, []);
+
 
     useEffect(() => {
         if (!stems.length) return;
@@ -109,6 +133,16 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
         }
         setIsPlaying(!isPlaying);
     };
+
+    const getStemNames = (count) => {
+        if (count === 2) return ["Vocals", "Accompaniments"];
+        if (count === 4) return ["Vocals", "Drums", "Bass", "Other"];
+        if (count === 5) return ["Vocals", "Drums", "Bass", "Piano", "Other"];
+        // fallback for other cases
+        return Array(count).fill().map((_, i) => `Stem ${i + 1}`);
+    };
+
+    const stemNames = getStemNames(stems.length);
 
     return (
         <div className='mx-auto mt-10 w-[75%] h-auto shadow rounded bg-white'>
@@ -175,82 +209,86 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
                 </div>
 
                 <br />
-                <div id='Stem1' className='mb-5 outline-gray rounded'>
-                    <div className='bg-white p-4 rounded shadow-md'>
-                        <div className='flex justify-between items-center'>
-                            <div className='bg-black rounded-full p-2 flex items-center justify-center'>
-                                <Mic className='w-5 h-5 text-white' />
+                {stems.map((url, idx) => (
+                    <div key={idx} id={`Stem${idx+1}`} className='mb-5 outline-gray rounded'>
+                        <div className='bg-white p-4 rounded shadow-md'>
+                            <div className='flex justify-between items-center'>
+                                <div className='bg-black rounded-full p-2 flex items-center justify-center'>
+                                    <Mic className='w-5 h-5 text-white' />
+                                </div>
+                                <div className='ml-4 flex-1'>
+                                    <div className='text-xl text-gray-800 font-semibold'>
+                                        {stemNames[idx]}
+                                    </div>
+                                    <div className='text-sm text-gray-500 font-normal'>
+                                        {url.split('/').pop()}
+                                    </div>
+                                </div>
+                                <div className='flex items-center space-x-2 mr-3'>
+                                    <Volume2 className='w-4 h-4 text-gray-600' />
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="1"
+                                        step="0.01"
+                                        value={stemVolume}
+                                        onChange={e => {
+                                            const newVolume = parseFloat(e.target.value);
+                                            setStemVolume(newVolume);
+                                            howlsRef.current[idx]?.volume(newVolume);
+                                        }}
+                                        className="w-24 cursor-pointer accent-black"
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        const link = document.createElement('a');
+                                        link.href = url;
+                                        link.download = url.split('/').pop();
+                                        link.click();
+                                    }}
+                                    className='p-2 rounded-sm hover:bg-gray-200 transition'
+                                    title='Download Stem'
+                                >
+                                    <Download className='w-5 h-5 text-black' />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const howl = howlsRef.current[idx];
+                                        if (!howl) return;
+                                        if (!isPlaying) {
+                                            howl.play();
+                                            setDuration(howl.duration());
+                                            intervalRef.current = setInterval(() => {
+                                                setSeek(howl.seek());
+                                            }, 500);
+                                        } else {
+                                            howl.pause();
+                                            clearInterval(intervalRef.current);
+                                        }
+                                        setIsPlaying(!isPlaying);
+                                    }}
+                                    className='ml-3 p-2 bg-black rounded-sm hover:bg-gray-700 transition shadow'
+                                >
+                                    {isPlaying ? <Pause className='w-5 h-5 text-black fill-white' /> : <Play className='w-5 h-5 text-black fill-white' />}
+                                </button>
                             </div>
-                            <div className='ml-4 flex-1'>
-                                <div className='text-xl text-gray-800 font-semibold'>Vocals</div>
-                                <div className='text-sm text-gray-500 font-normal'>vocals_song_file_name.wav</div>
-                            </div>
-
-                            <div className='flex items-center space-x-2 mr-3'>
-                                <Volume2 className='w-4 h-4 text-gray-600' />
+                            <div className="mt-3 flex items-center space-x-3 bg-gray-200 p-3 rounded-sm">
+                                <span className="text-sm text-gray-500 w-10 text-right">{formatTime(seek)}</span>
                                 <input
                                     type="range"
                                     min="0"
-                                    max="1"
-                                    step="0.01"
-                                    value={stemVolume}              
-                                    onChange={handleStemVolume}  
-                                    className="w-24 cursor-pointer accent-black"
+                                    max={duration}
+                                    step="0.1"
+                                    value={seek}
+                                    onChange={handleSeekChange}
+                                    className="flex-1 accent-black cursor-pointer"
                                 />
+                                <span className="text-sm text-gray-500 w-10">{formatTime(duration)}</span>
                             </div>
-
-                            <button
-                                onClick={handleDownload}
-                                className='p-2 rounded-sm hover:bg-gray-200 transition'
-                                title='Download Stem'
-                            >
-                                <Download className='w-5 h-5 text-black' />
-                            </button>
-
-                            <button
-                                onClick={handleMasterToggle}
-                                className='ml-3 p-2 bg-black rounded-sm hover:bg-gray-700 transition shadow'
-                            >
-                                {isPlaying ? <Pause className='w-5 h-5 text-black fill-white' /> : <Play className='w-5 h-5 text-black fill-white' />}
-                            </button>
-                        </div>
-                        <div className="mt-3 flex items-center space-x-3 bg-gray-200 p-3 rounded-sm">
-                            <span className="text-sm text-gray-500 w-10 text-right">{formatTime(seek)}</span>
-                            <input
-                                type="range"
-                                min="0"
-                                max={duration}
-                                step="0.1"
-                                value={seek}
-                                onChange={handleSeekChange}
-                                className="flex-1 accent-black cursor-pointer"
-                            />
-
-                            {/* Total Time */}
-                            <span className="text-sm text-gray-500 w-10">{formatTime(duration)}</span>
                         </div>
                     </div>
-                </div>
-                <div id='Stem2' className='mb-5 outline-gray rounded'>
-                    <div className='bg-white p-4 rounded shadow-md'>
-                        <div className='flex justify-between items-center'>
-                            <div className='bg-black rounded-full p-2 flex items-center justify-center'>
-                                <Mic className='w-5 h-5 text-white' />
-                            </div>
-                            <div className='ml-4 flex-1'>
-                                <div className='text-xl text-gray-800 font-semibold'>Accompaniments</div>
-                                <div className='text-sm text-gray-500 font-normal'>Accompaniments_song_file_name.wav</div>
-                            </div>
-
-                            <button
-                                onClick={handleMasterToggle}
-                                className='ml-3 p-2 bg-black rounded-sm hover:bg-gray-700 transition shadow'
-                            >
-                                {isPlaying ? <Pause className='w-5 h-5 text-black fill-white' /> : <Play className='w-5 h-5 text-black fill-white' />}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                ))}
             </div>
         </div >
     )

@@ -28,6 +28,7 @@ export default function Navbar() {
                     </div>
                     <div className='flex justify-end mr-3'>
                         <Link href="/"><div className='px-5 hover:bg-slate-400 rounded py-2 flex justify-center items-center'>Home</div></Link>
+                        <Link href="/StemsDisplay"><div className='px-5 hover:bg-slate-400 rounded py-2 flex justify-center items-center'>Seperated Stems</div></Link>
                         <Link href='/howitworks'><div className='px-5 hover:bg-slate-400 rounded py-2 flex justify-center items-center'>How it works</div></Link>
                         <Link href='/about'><div className='px-5 hover:bg-slate-400 rounded py-2 flex justify-center items-center'>About</div> </Link> 
                         {user?
