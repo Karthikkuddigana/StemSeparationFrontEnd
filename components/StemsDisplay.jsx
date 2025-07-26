@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, Mic, Play, Pause, Volume2, Download } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Mic, Play, Pause, Volume2, Download, Music, Drum, Speaker, Piano, AudioLines, FileAudio } from 'lucide-react';
 import { Howl, Howler } from 'howler';
 
 export default function StemsDisplay({ setSelectedStem, selectedStem }) {
+    const router = useRouter();
     const [stems, setStems] = useState([]);
     const [isPlaying, setIsPlaying] = useState(false);
     const howlsRef = useRef([]);
@@ -15,7 +17,7 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
     const intervalRef = useRef(null);
 
     const handlePlayStem = () => {
-        const howl = howlsRef.current[0]; 
+        const howl = howlsRef.current[0];
         if (!howl) return;
 
         if (!isPlaying) {
@@ -35,7 +37,7 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
     const handleStemVolume = (e) => {
         const newVolume = parseFloat(e.target.value);
         setStemVolume(newVolume);
-        howlsRef.current[stemIndex]?.volume(newVolume); 
+        howlsRef.current[stemIndex]?.volume(newVolume);
     };
 
     const handleSeekChange = (e) => {
@@ -60,19 +62,18 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
     };
 
     const handleDownload = () => {
-        const url = stemUrls[stemIndex]; 
+        const url = stemUrls[stemIndex];
         const link = document.createElement('a');
         link.href = url;
         link.download = url.split('/').pop();
         link.click();
     };
 
-useEffect(() => {
-    const fetchStems = async () => {
-        try {
-            const token = localStorage.getItem('token'); 
 
-            const res = await fetch('https://localhost:7000/GetUserFiles', {
+    const fetchzipfile = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('https://localhost:7000/DownloadUserFiles', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -80,29 +81,60 @@ useEffect(() => {
                 },
             });
 
-            if (!res.ok) {
-                throw new Error(`HTTP error! Status: ${res.status}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
 
-            const data = await res.json();
-
-            const stemObject = data[0]; 
-            const urls = [
-                stemObject.stem1Url,
-                stemObject.stem2Url,
-                stemObject.stem3Url,
-                stemObject.stem4Url,
-                stemObject.stem5Url,
-            ].filter(url => !!url); 
-
-            setStems(urls); 
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'stems.zip';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
         } catch (error) {
-            console.error('Failed to fetch stems:', error);
+            console.error('Download Failed:', error);
         }
     };
 
-    fetchStems();
-}, []);
+    useEffect(() => {
+        const fetchStems = async () => {
+            try {
+                const token = localStorage.getItem('token');
+
+                const res = await fetch('https://localhost:7000/GetUserFiles', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!res.ok) {
+                    throw new Error(`HTTP error! Status: ${res.status}`);
+                }
+
+                const data = await res.json();
+
+                const stemObject = data[0];
+                const urls = [
+                    stemObject.stem1Url,
+                    stemObject.stem2Url,
+                    stemObject.stem3Url,
+                    stemObject.stem4Url,
+                    stemObject.stem5Url,
+                ].filter(url => !!url);
+
+                setStems(urls);
+            } catch (error) {
+                console.error('Failed to fetch stems:', error);
+            }
+        };
+
+        fetchStems();
+    }, []);
 
 
     useEffect(() => {
@@ -142,6 +174,19 @@ useEffect(() => {
         return Array(count).fill().map((_, i) => `Stem ${i + 1}`);
     };
 
+    const stemIcons = {
+        Vocals: Mic,
+        Accompaniment: Music,
+        Drums: Drum,
+        Bass: Speaker,
+        Piano: Piano,
+        Other: AudioLines,
+    };
+
+   const Icon = ({ name }) => {
+        const Component = stemIcons[name] || FileAudio;     
+        return <Component className='w-5 h-5 text-white' />;
+    };
     const stemNames = getStemNames(stems.length);
 
     return (
@@ -159,11 +204,16 @@ useEffect(() => {
                         </div>
                     </div>
                     <div className='flex space-x-3'>
-                        <button className='flex items-center px-4 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 transition'>
+                        <button
+                            className='flex items-center px-4 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 transition'
+                            onClick={() => router.push('/')}
+                        >
                             <ArrowLeft className='w-4 h-4 mr-2' />
                             Back to Upload
                         </button>
-                        <button className='flex px-4 py-2 rounded-md bg-black text-white hover:bg-gray-800 transition'>
+                        <button
+                            className='flex px-4 py-2 rounded-md bg-black text-white hover:bg-gray-800 transition'
+                            onClick={fetchzipfile}>
                             Download
                         </button>
                     </div>
@@ -210,11 +260,12 @@ useEffect(() => {
 
                 <br />
                 {stems.map((url, idx) => (
-                    <div key={idx} id={`Stem${idx+1}`} className='mb-5 outline-gray rounded'>
+                    <div key={idx} id={`Stem${idx + 1}`} className='mb-5 outline-gray rounded'>
                         <div className='bg-white p-4 rounded shadow-md'>
                             <div className='flex justify-between items-center'>
                                 <div className='bg-black rounded-full p-2 flex items-center justify-center'>
-                                    <Mic className='w-5 h-5 text-white' />
+                                    <Icon name={stemNames[idx]} />
+                                    {/* <Mic className='w-5 h-5 text-white' /> */}
                                 </div>
                                 <div className='ml-4 flex-1'>
                                     <div className='text-xl text-gray-800 font-semibold'>

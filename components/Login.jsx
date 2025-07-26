@@ -5,21 +5,21 @@ import { AuthContext } from './SessionManager';
 import { useRouter } from 'next/navigation';
 
 export default function Login() {
-    const [username, setUsername] = useState(""); 
+    const [userName, setUsername] = useState(""); 
     const [password, setPassword] = useState(""); 
     const router = useRouter(); 
     const auth = useContext(AuthContext); 
     const UserNameChangeHandler=(e) => { 
         setUsername(e.target.value); 
-        console.log(username)
+        console.log(userName)
      }; 
     const PasswordChangeHandler=(e)=>{
         setPassword(e.target.value); 
         console.log(password)
     }; 
-    const submiHandler=async(e ) => { 
+    const submitHandler=async(e ) => { 
         e.preventDefault(); 
-        let res = await auth.login(username, password); 
+        let res = await auth.login(userName, password); 
         if(res){
              router.replace('/'); 
             console.log("User login successful")
@@ -51,7 +51,7 @@ export default function Login() {
                 <label htmlFor="showPassword" className='ml-5 cursor-pointer'>Show Password</label>
             </div>
             <div className='flex justify-around mt-5 '>
-                <button onClick={submiHandler} className='bg-black text-white font-bold p-3 rounded hover:scale-110 ease-in-out active:scale-125 transition duration-150 cursor-pointer'>
+                <button onClick={submitHandler} className='bg-black text-white font-bold p-3 rounded hover:scale-110 ease-in-out active:scale-125 transition duration-150 cursor-pointer'>
                     Sign In
                 </button>
                 <button className='bg-black text-white font-bold p-3 rounded hover:scale-110 ease-in-out active:scale-125 transition duration-150 cursor-pointer'>

@@ -43,7 +43,7 @@ export default function Landing() {
                 const formData = new FormData(); 
                 formData.append("mediaFile",file); 
                 formData.append("noOfStems",stemCount); 
-                const response = await fetch("http://localhost:5205/UploadAudio",{
+                const response = await fetch("https://localhost:7000/UploadAudio",{
                     method: "POST", 
                     headers:{
                         // "Content-Type":"multipart/form-data",
