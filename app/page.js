@@ -3,12 +3,14 @@ import React from 'react'
 import Upload from '@/components/Upload'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import ProcessingInformation from '@/components/ProcessingInformation'
 
 export default function Landing() {
     const [file, setFile] = useState("")
     const [resetTrigger, setResetTrigger] =useState(0)
     const [stemCount, setstemCount] = useState("")
     const [error, seterror] = useState("");
+    const [processingState,setProcessingState]=useState("Pending"); 
     const router = useRouter(); 
     const validateFile = (file) => { 
 
@@ -28,6 +30,7 @@ export default function Landing() {
         setstemCount(5); 
     }
     const submitForm=async ()=>{
+        setProcessingState("Uploading"); 
         console.log(stemCount,file.name)
         if(!file && !stemCount){
             alert("Pls upload a file and stem count to continue")
@@ -52,9 +55,16 @@ export default function Landing() {
                     body: formData
                 })
                 if(response.ok){
+                    setProcessingState("Processed")
                     const jsonResp=await response.json(); 
                     console.log(jsonResp); 
                     router.push("/StemsDisplay"); 
+                }
+                else{
+                     if(!response.ok || response){
+                    setProcessingState("Failure")
+                }
+                
                 }
                 
             }
@@ -99,13 +109,7 @@ export default function Landing() {
                         <button onClick={submitForm} className='hover:scale-125 active:bg-gray-600 transition-all ease-in-out bg-black text-white p-2 rounded cursor-pointer'>Separate Stems</button>
                     </div>
                     <br />
-                    <div className='bg-black text-white p-10 rounded'>
-                        <ul>
-                            <li>Ready to process your audio file...</li>
-                            <li>Select a separation mode and click "Separate Stems"</li>
-                        </ul>
-                       
-                    </div>
+                    <ProcessingInformation processingState={processingState}></ProcessingInformation>
                 </div>
         </div> 
     </>
