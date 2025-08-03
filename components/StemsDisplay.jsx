@@ -1,53 +1,23 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Mic, Play, Pause, Volume2, Download, Music, Drum, Speaker, Piano, AudioLines, FileAudio } from 'lucide-react';
 import { Howl, Howler } from 'howler';
+import WaveFormPlayer from './WaveFormPlayer';
 
-export default function StemsDisplay({ setSelectedStem, selectedStem }) {
+
+export default function StemsDisplay({ }) {
     const router = useRouter();
     const [stems, setStems] = useState([]);
-    const [isPlaying, setIsPlaying] = useState(false);
+    const [stemVolume, setStemVolume] = useState([]);
+    const [seek, setSeek] = useState([]);
+    const [duration, setDuration] = useState([]);
+    const [isPlaying, setIsPlaying] = useState([]);
+    const [volume, setVolume] = useState(1);
     const howlsRef = useRef([]);
-    const [volume, setVolume] = useState(1.0);
-    const [stemVolume, setStemVolume] = useState(1);
-    const [seek, setSeek] = useState(0);
-    const [duration, setDuration] = useState(0);
-    const intervalRef = useRef(null);
-
-    const handlePlayStem = () => {
-        const howl = howlsRef.current[0];
-        if (!howl) return;
-
-        if (!isPlaying) {
-            howl.play();
-            setDuration(howl.duration());
-            intervalRef.current = setInterval(() => {
-                setSeek(howl.seek());
-            }, 500);
-        } else {
-            howl.pause();
-            clearInterval(intervalRef.current);
-        }
-
-        setIsPlaying(!isPlaying);
-    };
-
-    const handleStemVolume = (e) => {
-        const newVolume = parseFloat(e.target.value);
-        setStemVolume(newVolume);
-        howlsRef.current[stemIndex]?.volume(newVolume);
-    };
-
-    const handleSeekChange = (e) => {
-        const value = parseFloat(e.target.value);
-        const howl = howlsRef.current[0];
-        if (howl) {
-            howl.seek(value);
-            setSeek(value);
-        }
-    };
+    const intervalRef = useRef([]);
+    const animationRefs = useRef([]); 
 
     const formatTime = (time) => {
         const minutes = Math.floor(time / 60);
@@ -60,15 +30,6 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
         setVolume(newVolume);
         Howler.volume(newVolume);
     };
-
-    const handleDownload = () => {
-        const url = stemUrls[stemIndex];
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = url.split('/').pop();
-        link.click();
-    };
-
 
     const fetchzipfile = async () => {
         try {
@@ -136,41 +97,109 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
         fetchStems();
     }, []);
 
-
     useEffect(() => {
         if (!stems.length) return;
 
-        howlsRef.current = stems.map((url) =>
-            new Howl({
+        howlsRef.current = stems.map((url, i) => {
+            const howl = new Howl({
                 src: [url],
                 html5: true,
                 volume: 1.0,
-            })
-        );
+                onload: () => {
+                    setDuration(durs => {
+                        const updated = [...durs];
+                        updated[i] = howl.duration();
+                        return updated;
+                    });
+                }
+            });
+            return howl;
+        });
 
         return () => {
             howlsRef.current.forEach((howl) => howl.unload());
         };
     }, [stems]);
 
+    useEffect(() => {
+        setStemVolume(stems.map(() => 1));
+        setSeek(stems.map(() => 0));
+        setDuration(stems.map(() => 0));
+        setIsPlaying(stems.map(() => false));
+        intervalRef.current = stems.map(() => null);
+    }, [stems]);
+
+    const updateSeek = (i) => {
+        if (howlsRef.current[i]) {
+            setSeek(seeks => {
+                const updated = [...seeks];
+                updated[i] = howlsRef.current[i].seek();
+                return updated;
+            });
+            animationRefs.current[i] = requestAnimationFrame(() => updateSeek(i));
+        }
+    };
+
     const handleMasterToggle = () => {
-        if (isPlaying) {
-            howlsRef.current.forEach((howl) => howl.pause());
-        } else {
-            howlsRef.current.forEach((howl) => {
-                if (!howl.playing()) {
+        const isAnyPlaying = isPlaying.some(Boolean);
+        if (!isAnyPlaying) {
+            const currentSeek = seek[0] ?? 0;
+
+            setIsPlaying(isPlaying => isPlaying.map(() => true));
+            howlsRef.current.forEach((howl, i) => {
+                if (howl) {
+                    howl.seek(currentSeek);
+                    howl.volume(stemVolume[i] ?? 1.0);
                     howl.play();
+                    animationRefs.current[i] = requestAnimationFrame(() => updateSeek(i));
+                }
+            });
+        } else {
+            setIsPlaying(isPlaying => isPlaying.map(() => false));
+            howlsRef.current.forEach((howl, i) => {
+                if (howl) howl.pause();
+                if (animationRefs.current[i]) {
+                    cancelAnimationFrame(animationRefs.current[i]);
+                    animationRefs.current[i] = null;
                 }
             });
         }
-        setIsPlaying(!isPlaying);
     };
+
+
+    const handleSeekChange = useCallback((index, value) => {
+        setSeek(seeks => {
+            const updated = [...seeks]
+            updated[index] = value
+            return updated
+        })
+        howlsRef.current[index]?.seek(value)
+    }, [])
+
+    const seekAllStems = useCallback((time) => {
+        setSeek(() => stems.map(() => time))
+
+        howlsRef.current.forEach((howl) => {
+            if (howl) {
+                howl.seek(time)
+            }
+        })
+    }, [stems])
+
+
+
+    
+    useEffect(() => {
+        return () => {
+            animationRefs.current.forEach(id => id && cancelAnimationFrame(id));
+        };
+    }, []);
 
     const getStemNames = (count) => {
         if (count === 2) return ["Vocals", "Accompaniments"];
         if (count === 4) return ["Vocals", "Drums", "Bass", "Other"];
         if (count === 5) return ["Vocals", "Drums", "Bass", "Piano", "Other"];
-        // fallback for other cases
+        
         return Array(count).fill().map((_, i) => `Stem ${i + 1}`);
     };
 
@@ -183,11 +212,13 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
         Other: AudioLines,
     };
 
-   const Icon = ({ name }) => {
-        const Component = stemIcons[name] || FileAudio;     
+    const Icon = ({ name }) => {
+        const Component = stemIcons[name] || FileAudio;
         return <Component className='w-5 h-5 text-white' />;
     };
     const stemNames = getStemNames(stems.length);
+
+    const isAnyPlaying = isPlaying.some(Boolean);
 
     return (
         <div className='mx-auto mt-10 w-[75%] h-auto shadow rounded bg-white'>
@@ -219,9 +250,6 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
                     </div>
                 </div>
                 <br />
-                <div className='bg-black text-white p-10 rounded'>
-                </div>
-                <br />
                 <div id='Master_Controls'>
                     <div className='bg-gray-900 text-white p-4 rounded flex justify-between items-center'>
                         <div className='flex items-center text-xl'>
@@ -229,7 +257,7 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
                                 onClick={handleMasterToggle}
                                 className='mr-3 p-2 bg-white rounded-full hover:bg-gray-400 transition'
                             >
-                                {isPlaying ? <Pause className='w-5 h-5 text-black fill-black' /> : <Play className='w-5 h-5 text-black fill-black' />}
+                                {isPlaying.some(Boolean) ? <Pause className='w-5 h-5 text-black fill-black' /> : <Play className='w-5 h-5 text-black fill-black' />}
                             </button>
                             <div>
                                 Master Controls
@@ -260,12 +288,11 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
 
                 <br />
                 {stems.map((url, idx) => (
-                    <div key={idx} id={`Stem${idx + 1}`} className='mb-5 outline-gray rounded'>
+                    <div key={idx} id={`Stem${idx + 1}`} className='mb-1 outline-gray rounded'>
                         <div className='bg-white p-4 rounded shadow-md'>
                             <div className='flex justify-between items-center'>
                                 <div className='bg-black rounded-full p-2 flex items-center justify-center'>
                                     <Icon name={stemNames[idx]} />
-                                    {/* <Mic className='w-5 h-5 text-white' /> */}
                                 </div>
                                 <div className='ml-4 flex-1'>
                                     <div className='text-xl text-gray-800 font-semibold'>
@@ -282,10 +309,15 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
                                         min="0"
                                         max="1"
                                         step="0.01"
-                                        value={stemVolume}
+                                        value={stemVolume[idx] ?? 1}
                                         onChange={e => {
                                             const newVolume = parseFloat(e.target.value);
-                                            setStemVolume(newVolume);
+                                            setStemVolume(vols => {
+                                                const updated = [...vols];
+                                                updated[idx] = newVolume;
+                                                return updated;
+                                            });
+                                            
                                             howlsRef.current[idx]?.volume(newVolume);
                                         }}
                                         className="w-24 cursor-pointer accent-black"
@@ -304,39 +336,40 @@ export default function StemsDisplay({ setSelectedStem, selectedStem }) {
                                     <Download className='w-5 h-5 text-black' />
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        const howl = howlsRef.current[idx];
-                                        if (!howl) return;
-                                        if (!isPlaying) {
-                                            howl.play();
-                                            setDuration(howl.duration());
-                                            intervalRef.current = setInterval(() => {
-                                                setSeek(howl.seek());
-                                            }, 500);
-                                        } else {
-                                            howl.pause();
-                                            clearInterval(intervalRef.current);
-                                        }
-                                        setIsPlaying(!isPlaying);
-                                    }}
+                                    onClick={handleMasterToggle}
                                     className='ml-3 p-2 bg-black rounded-sm hover:bg-gray-700 transition shadow'
                                 >
-                                    {isPlaying ? <Pause className='w-5 h-5 text-black fill-white' /> : <Play className='w-5 h-5 text-black fill-white' />}
+                                    {isAnyPlaying ? <Pause className='w-5 h-5 text-black fill-white' /> : <Play className='w-5 h-5 text-black fill-white' />}
                                 </button>
                             </div>
                             <div className="mt-3 flex items-center space-x-3 bg-gray-200 p-3 rounded-sm">
-                                <span className="text-sm text-gray-500 w-10 text-right">{formatTime(seek)}</span>
+                                <span className="text-sm text-gray-500 w-10 text-right">{formatTime(seek[idx] ?? 0)}</span>
                                 <input
                                     type="range"
                                     min="0"
-                                    max={duration}
+                                    max={duration[idx] ?? 0}
                                     step="0.1"
-                                    value={seek}
-                                    onChange={handleSeekChange}
+                                    value={seek[idx] ?? 0}
+                                    onChange={e => {
+                                        const value = parseFloat(e.target.value);
+                                        setSeek(seeks => {
+                                            const updated = [...seeks];
+                                            updated[idx] = value;
+                                            return updated;
+                                        });
+                                        howlsRef.current[idx]?.seek(value);
+                                    }}
                                     className="flex-1 accent-black cursor-pointer"
                                 />
-                                <span className="text-sm text-gray-500 w-10">{formatTime(duration)}</span>
+                                <span className="text-sm text-gray-500 w-10">{formatTime(duration[idx] ?? 0)}</span>
                             </div>
+                            <WaveFormPlayer
+                                url={url}
+                                idx={idx}
+                                currentTime={seek[idx] ?? 0}
+                                onSeek={seekAllStems}
+                                howl={howlsRef.current[idx]}
+                            />
                         </div>
                     </div>
                 ))}
