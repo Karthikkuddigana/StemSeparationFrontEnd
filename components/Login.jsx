@@ -54,7 +54,7 @@ export default function Login() {
                 <button onClick={submitHandler} className='bg-black text-white font-bold p-3 rounded hover:scale-110 ease-in-out active:scale-125 transition duration-150 cursor-pointer'>
                     Sign In
                 </button>
-                <button className='bg-black text-white font-bold p-3 rounded hover:scale-110 ease-in-out active:scale-125 transition duration-150 cursor-pointer'>
+                <button onClick={()=>router.push("/signUp")} className='bg-black text-white font-bold p-3 rounded hover:scale-110 ease-in-out active:scale-125 transition duration-150 cursor-pointer'>
                     Sign Up
                 </button>
             </div>
