@@ -2,8 +2,8 @@
 import React, { createContext,useState } from 'react'
 export const AuthContext = createContext(); 
 export default function SessionManager({children}) {
-    let s= localStorage.getItem("userName")
-    const [userName, setuserName] = useState(s); 
+    // let s= localStorage.getItem("userName")
+    const [userName, setuserName] = useState(""); 
     console.log("Session Manager is called"); 
     const login = async(userName,password)=>{
         try{
