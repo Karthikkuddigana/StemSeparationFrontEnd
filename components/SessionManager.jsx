@@ -36,7 +36,7 @@ export default function SessionManager({children}) {
         localStorage.clear(); 
      }
   return (
-    <AuthContext.Provider value={{login, userName, logout}}>
+    <AuthContext.Provider value={{login, userName, logout, setuserName}}>
         {children}
     </AuthContext.Provider>
   )

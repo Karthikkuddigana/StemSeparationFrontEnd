@@ -4,6 +4,9 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SessionManager from "@/components/SessionManager";
 import Loader from "@/components/Loader"; 
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import axios from "axios";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -19,7 +22,7 @@ export const metadata = {
   description: "Separate stems from your audio file",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
@@ -27,11 +30,11 @@ export default function RootLayout({ children }) {
       >
         <SessionManager>
           
-            <Navbar></Navbar>
-            <Loader>
-              {children}
-              </Loader>
-            <Footer></Footer>
+          <GoogleOAuthProvider clientId="165465259820-frjlikql0msnl9qffanlmdqe35f3baih.apps.googleusercontent.com">
+            <Navbar />
+            <Loader>{children}</Loader>
+            <Footer />
+          </GoogleOAuthProvider>
           
           
         </SessionManager>
@@ -40,3 +43,7 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
+// await axios.post("https://localhost:7000/api/LoginAndRegister/GoogleSignIn", {
+//   IdToken: credentialResponse.credential}
+// );
