@@ -60,21 +60,21 @@ export default function Login() {
 
 
     return (
-        <div className='w-screen flex items-center justify-center mb-25'>
-            <div className='p-5 rounded-lg w-1/4 h-100 flex flex-col gap-5 justify-center shadow-lg shadow-neutral-700 mt-25'>
-                <div className='ml-20 text-xl'>
+        <div className='flex items-center justify-center'>
+            <div className='pl-20 pr-20 pt-10 pb-10 rounded-lg  flex flex-col gap-5 justify-center shadow-lg shadow-neutral-700'>
+                <div className='text-xl'>
                     <label htmlFor="username">User Name:</label>
                 </div>
-                <div className='ml-20'>
+                <div className=''>
                     <input onChange={UserNameChangeHandler} className='px-2 h-8 rounded border-2 focus:scale-110 transition-all ease-in-out' type="text" name='username' id='username' />
                 </div>
-                <div className='ml-20 text-xl'>
+                <div className='text-xl'>
                     <label htmlFor="password">Password:</label>
                 </div>
-                <div className='ml-20'>
+                <div className=''>
                     <input onChange={PasswordChangeHandler} className='px-2 h-8 rounded border-2 focus:scale-110 transition-all ease-in-out' type="password" name="password" id="password" />
                 </div>
-                <div className='ml-20 cursor-pointer'>
+                <div className='cursor-pointer'>
                     <input id='showPassword' className='cursor-pointer' type="checkbox" />
                     <label htmlFor="showPassword" className='ml-5 cursor-pointer'>Show Password</label>
                 </div>
@@ -87,7 +87,7 @@ export default function Login() {
                     </button>
                 </div>
 
-                <div className="flex justify-center mt-3 border-amber-400 bg-blue-600">
+                <div className="flex justify-center mt-3 border-amber-400">
                     <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleFailure} />
                 </div>
             </div>
