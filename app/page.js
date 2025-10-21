@@ -4,6 +4,8 @@ import Upload from '@/components/Upload'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import ProcessingInformation from '@/components/ProcessingInformation'
+import LandingIntro from '@/components/LandingIntro'
+import PowerfulFeatures from '@/components/PowerfulFeatures'
 
 export default function Landing() {
     const [file, setFile] = useState("")
@@ -73,6 +75,7 @@ export default function Landing() {
     }
   return (
     <>
+        <LandingIntro></LandingIntro>
         <div id="Upload_Component" className='mx-auto mt-10 w-[75%] h-auto shadow-2xl rounded bg-white'>
                 <div className='w-[90%] ml-[5%] pt-5 pb-5'>
                     <div className='mt-5'>
@@ -112,6 +115,7 @@ export default function Landing() {
                     <ProcessingInformation processingState={processingState}></ProcessingInformation>
                 </div>
         </div> 
+        <PowerfulFeatures></PowerfulFeatures>
     </>
     
   )

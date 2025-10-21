@@ -40,12 +40,13 @@ export default function Login() {
             console.log("Google credential:", IdToken);
 
             const response = await axios.post(
-                "https://localhost:7000/api/LoginAndRegister/GoogleSignIn",
+                "http://localhost:5205/api/LoginAndRegister/GoogleSignIn",
                 { IdToken }
             );
 
             localStorage.setItem("token", response.data.JwtToken);
-            localStorage.setItem("userName", response.data.Email);
+            localStorage.setItem("username", response.data.userName);
+            auth.setuserName(response.data.userName); 
             router.replace("/"); // redirect to home
         } catch (error) {
             console.error(error);
@@ -86,7 +87,7 @@ export default function Login() {
                     </button>
                 </div>
 
-                <div className="flex justify-center mt-3">
+                <div className="flex justify-center mt-3 border-amber-400 bg-blue-600">
                     <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleFailure} />
                 </div>
             </div>

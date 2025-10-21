@@ -100,10 +100,22 @@ export default function SignUp() {
         try {
             const IdToken = credentialResponse.credential;
 
-            const response = await axios.post(
-                "https://localhost:7000/api/LoginAndRegister/GoogleSignIn",
-                { IdToken }
-            );
+            // const response = await axios.post(
+            //     "https://localhost:5205/api/LoginAndRegister/GoogleSignIn",
+            //     { IdToken }
+            // );
+            console.log(IdToken)
+            const response = await fetch("http://localhost:5205/api/LoginAndRegister/GoogleSignIn", 
+                {
+                    method: "POST", 
+                    headers:{
+                       "Content-Type": "application/json",
+                    }, 
+                    body: JSON.stringify({
+                        IdToken 
+                    })
+                }
+            )
 
             localStorage.setItem("token", response.data.JwtToken);
             localStorage.setItem("userName", response.data.Email);

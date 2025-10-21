@@ -18,7 +18,7 @@ export default function Upload({setFile,resetTrigger}) {
         const formData = new FormData(); 
     }
   return (
-    <div className='border-2 border-dashed border-gray-400 rounded p-5'>
+    <div className='border-2 border-dashed border-gray-400 rounded p-5 scroll-smooth' id="Upload">
         <label htmlFor='audio-upload' className='flex flex-col items-center cursor-pointer'>
             <div className='flex justify-center'>Drag and drop your audio file here, or click to browse</div>
             <br />
