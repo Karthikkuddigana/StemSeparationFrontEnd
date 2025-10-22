@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import ProcessingInformation from '@/components/ProcessingInformation'
 import LandingIntro from '@/components/LandingIntro'
 import PowerfulFeatures from '@/components/PowerfulFeatures'
+import SupportedFormats from '@/components/SupportedFormats'
 
 export default function Landing() {
     const [file, setFile] = useState("")
@@ -116,6 +117,7 @@ export default function Landing() {
                 </div>
         </div> 
         <PowerfulFeatures></PowerfulFeatures>
+        <SupportedFormats></SupportedFormats>
     </>
     
   )
