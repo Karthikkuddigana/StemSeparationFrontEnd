@@ -44,8 +44,14 @@ export default function Login() {
                 { IdToken }
             );
 
-            localStorage.setItem("token", response.data.JwtToken);
-            localStorage.setItem("username", response.data.userName);
+            useEffect(() => {
+                const token = localStorage.getItem("token");
+                const username = localStorage.getItem("username");
+
+                setToken(token);
+                setUserName(username);
+            }, []);
+
             auth.setuserName(response.data.userName); 
             router.replace("/"); // redirect to home
         } catch (error) {
